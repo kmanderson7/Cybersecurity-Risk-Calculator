@@ -1015,12 +1015,20 @@ const FairRiskCalculator = () => {
             <strong>Professional Disclaimer:</strong> This educational tool provides strategic risk estimates using simplified methodology 
             inspired by industry-standard FAIR practices. Actual incident costs vary significantly based on specific circumstances, industry, 
             geography, and regulatory requirements. Results should complement, not replace, comprehensive risk assessments and professional advice.
-                <br> © 2025 INP² All rights reserved.
-               <br> This Cybersecurity Risk Calculator and its underlying methodologies are proprietary to INP². No part of this tool may be reproduced, distributed, or used for commercial purposes without explicit written permission.
           </p>
-              </div>
+           <p class="text-xs text-gray-600 mt-2"> 
+      © 2025 INP² All rights reserved.
+      <br> This Cybersecurity Risk Calculator and its underlying methodologies are proprietary to INP². No part of this tool may be reproduced, distributed, or used for commercial purposes without explicit written permission.
+    </p>
+        </div>
       </div>
-    </div>
+    
+<p style={{ fontSize: '0.75rem', color: '#666', marginTop: '0.5rem' }}>
+  © 2025 INP² – All rights reserved. This Cybersecurity Risk Calculator and its underlying methodologies are proprietary to INP².
+  No part of this tool may be reproduced, distributed, or used for commercial purposes without explicit written permission.
+  For educational and internal business use only. Unauthorized use, modification, or redistribution is strictly prohibited.
+</p>
+</div>
   );
 };
 
