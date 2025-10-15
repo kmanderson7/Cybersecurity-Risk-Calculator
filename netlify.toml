@@ -1,0 +1,29 @@
+[build]
+  publish = "build"
+  functions = "netlify/functions"
+
+# Public login route (always accessible)
+[[redirects]]
+  from = "/login"
+  to = "/login.html"
+  status = 200
+
+# Allow app access only to users with role `subscriber`
+[[redirects]]
+  from = "/"
+  to = "/index.html"
+  status = 200
+  conditions = { Role = ["subscriber"] }
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+  conditions = { Role = ["subscriber"] }
+
+# Fallback for unauthenticated/unauthorized visitors → show /login
+[[redirects]]
+  from = "/*"
+  to = "/login"
+  status = 401
+
