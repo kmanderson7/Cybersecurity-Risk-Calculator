@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phishing Awareness Training</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inter Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f0f4f8; /* Light background similar to original */
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+        }
+        #root {
+            width: 100%;
+            max-width: 600px; /* Max width for better readability on large screens */
+            background-color: #ffffff;
+            border-radius: 1rem; /* Rounded corners for the main container */
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            overflow: hidden; /* Ensures rounded corners are respected */
+        }
+        /* Custom scrollbar for better aesthetics */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #888;
+            border-radius: 10px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #555;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <!-- React and ReactDOM CDNs -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <script type="text/babel">
+        const { useState } = React;
+        const { createRoot } = ReactDOM;
+
+        // Custom Modal Component (replaces Alert)
+        const CustomAlert = ({ message, onClose }) => {
+            if (!message) return null; // Don't render if no message
+
+            return (
+                <div className="fixed inset-0 bg-gray-600 bg-opacity-50 flex items-center justify-center p-4 z-50">
+                    <div className="bg-white rounded-lg shadow-xl p-6 max-w-sm w-full text-center">
+                        <p className="text-lg font-semibold mb-4 text-gray-800">{message}</p>
+                        <button
+                            onClick={onClose}
+                            className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition duration-300 ease-in-out"
+                        >
+                            OK
+                        </button>
+                    </div>
+                </div>
+            );
+        };
+
+        // Main App Component
+        const App = () => {
+            const [currentScreen, setCurrentScreen] = useState('home'); // 'home', 'email', 'website', 'education', 'score'
+            const [score, setScore] = useState(0);
+            const [emailScenarioIndex, setEmailScenarioIndex] = useState(0);
+            const [websiteScenarioIndex, setWebsiteScenarioIndex] = useState(0);
+            const [alertMessage, setAlertMessage] = useState(''); // State for custom alert
+
+            // Function to show custom alert
+            const showAlert = (message) => {
+                setAlertMessage(message);
+            };
+
+            // Function to close custom alert
+            const closeAlert = () => {
+                setAlertMessage('');
+            };
+
+            // Mock data for phishing email scenarios
+            const emailScenarios = [
+                {
+                    id: 1,
+                    sender: 'support@amaz0n.com', // Malicious sender
+                    subject: 'Your Recent Order #123456 - Action Required',
+                    body: 'Dear Customer,\n\nYour recent order could not be processed due to an issue with your payment information. Please update your details immediately by clicking the link below:\n\nhttps://www.amaz0n-security.com/update-payment\n\nFailure to do so will result in cancellation of your order.\n\nSincerely,\nAmazon Support Team',
+                    link: 'https://www.amaz0n-security.com/update-payment',
+                    redFlags: [
+                        { type: 'sender', text: 'support@amaz0n.com', explanation: 'Misspelled domain (amaz0n instead of amazon).', isPhishing: true },
+                        { type: 'link', text: 'https://www.amaz0n-security.com/update-payment', explanation: 'Suspicious URL (amaz0n-security.com is not amazon.com).', isPhishing: true },
+                        { type: 'urgency', text: 'Action Required', explanation: 'Creates a sense of urgency to pressure you into acting without thinking.', isPhishing: true },
+                    ],
+                    legitElements: [
+                        { type: 'greeting', text: 'Dear Customer', explanation: 'Generic greeting, not personalized.', isPhishing: false },
+                        { type: 'order_number', text: '#123456', explanation: 'Looks like a real order number, but could be fake.', isPhishing: false },
+                    ],
+                    correctPhishingCount: 3, // Number of red flags to identify
+                },
+                {
+                    id: 2,
+                    sender: 'noreply@paypal.com', // Legitimate sender
+                    subject: 'You sent a payment of $500.00 USD to John Doe',
+                    body: 'Hi [Your Name],\n\nYou sent a payment of $500.00 USD to John Doe. This transaction will appear on your statement as "PAYPAL *JOHN DOE".\n\nIf you did not authorize this transaction, please click here to report it: https://www.paypal.com/dispute\n\nThank you for using PayPal.',
+                    link: 'https://www.paypal.com/dispute',
+                    redFlags: [], // This is a legitimate email example
+                    legitElements: [
+                        { type: 'sender', text: 'noreply@paypal.com', explanation: 'Legitimate PayPal sender.', isPhishing: false },
+                        { type: 'link', text: 'https://www.paypal.com/dispute', explanation: 'Legitimate PayPal dispute link.', isPhishing: false },
+                        { type: 'personalization', text: 'Hi [Your Name]', explanation: 'Personalized greeting (though in this mock it\'s generic).', isPhishing: false },
+                    ],
+                    correctPhishingCount: 0,
+                },
+            ];
+
+            // Mock data for fake website scenarios
+            const websiteScenarios = [
+                {
+                    id: 1,
+                    url: 'https://www.amaz0n-security.com/login', // Malicious URL
+                    title: 'Amazon - Sign In',
+                    content: 'Welcome to Amazon. Please sign in to your account.',
+                    visualCues: [
+                        { type: 'url', text: 'https://www.amaz0n-security.com/login', explanation: 'Incorrect domain (amaz0n instead of amazon).', isPhishing: true },
+                        { type: 'ssl', text: 'No SSL/Broken Lock Icon', explanation: 'Lack of HTTPS or a broken padlock icon indicates an insecure connection.', isPhishing: true },
+                        { type: 'design', text: 'Pixelated Logo/Poor Design', explanation: 'Low-resolution images or inconsistent design can be a red flag.', isPhishing: true },
+                    ],
+                    correctPhishingCount: 3,
+                },
+            ];
+
+            // Function to handle user's choice on email red flags
+            const handleEmailRedFlagClick = (flag) => {
+                if (flag.isPhishing) {
+                    showAlert(`Correct! ${flag.explanation}`);
+                    setScore(prevScore => prevScore + 1);
+                } else {
+                    showAlert(`Incorrect. ${flag.explanation}`);
+                }
+            };
+
+            // Function to handle user's choice on website visual cues
+            const handleWebsiteVisualCueClick = (cue) => {
+                if (cue.isPhishing) {
+                    showAlert(`Correct! ${cue.explanation}`);
+                    setScore(prevScore => prevScore + 1);
+                } else {
+                    showAlert(`Incorrect. ${cue.explanation}`);
+                }
+            };
+
+            // Render different screens based on currentScreen state
+            const renderScreen = () => {
+                switch (currentScreen) {
+                    case 'home':
+                        return (
+                            <div className="flex flex-col items-center justify-center p-5 min-h-[500px]">
+                                <h1 className="text-3xl md:text-4xl font-bold mb-8 text-gray-800 text-center">Phishing & Social Engineering Awareness</h1>
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('email')}
+                                >
+                                    Start Email Phishing Simulation
+                                </button>
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('education')}
+                                >
+                                    Educational Modules
+                                </button>
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('score')}
+                                >
+                                    View Score
+                                </button>
+                            </div>
+                        );
+
+                    case 'email':
+                        const currentEmail = emailScenarios[emailScenarioIndex];
+                        if (!currentEmail) {
+                            return (
+                                <div className="flex flex-col items-center justify-center p-5 min-h-[500px]">
+                                    <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-gray-700 text-center">All Email Scenarios Completed!</h2>
+                                    <button
+                                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                        onClick={() => setCurrentScreen('home')}
+                                    >
+                                        Back to Home
+                                    </button>
+                                </div>
+                            );
+                        }
+                        return (
+                            <div className="flex flex-col p-5 bg-white rounded-lg shadow-md m-4 h-[calc(100vh-2rem)] overflow-y-auto">
+                                <h2 className="text-xl md:text-2xl font-semibold mb-4 text-gray-700 text-center">Simulated Email Phishing</h2>
+                                <div className="border border-gray-200 rounded-lg p-4 mb-4">
+                                    <div className="flex items-center mb-2">
+                                        <p className="font-bold mr-2 text-gray-600">From:</p>
+                                        <button
+                                            className="text-blue-600 hover:underline text-base"
+                                            onClick={() => handleEmailRedFlagClick(currentEmail.redFlags.find(f => f.type === 'sender') || currentEmail.legitElements.find(f => f.type === 'sender'))}
+                                        >
+                                            {currentEmail.sender}
+                                        </button>
+                                    </div>
+                                    <div className="flex items-center mb-4">
+                                        <p className="font-bold mr-2 text-gray-600">Subject:</p>
+                                        <button
+                                            className="font-bold text-gray-800 text-lg text-left"
+                                            onClick={() => handleEmailRedFlagClick(currentEmail.redFlags.find(f => f.type === 'urgency') || currentEmail.legitElements.find(f => f.type === 'subject'))}
+                                        >
+                                            {currentEmail.subject}
+                                        </button>
+                                    </div>
+                                    <div className="text-gray-700 leading-relaxed whitespace-pre-wrap">
+                                        {currentEmail.body.split('\n').map((line, index) => (
+                                            <p key={index} className="mb-1">
+                                                {line.includes('http') ? (
+                                                    <button
+                                                        className="text-blue-600 hover:underline"
+                                                        onClick={() => handleEmailRedFlagClick(currentEmail.redFlags.find(f => f.type === 'link') || currentEmail.legitElements.find(f => f.type === 'link'))}
+                                                    >
+                                                        {line}
+                                                    </button>
+                                                ) : (
+                                                    line
+                                                )}
+                                            </p>
+                                        ))}
+                                    </div>
+                                </div>
+                                {currentEmail.link && (
+                                    <button
+                                        className="bg-green-500 hover:bg-green-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                        onClick={() => setCurrentScreen('website')}
+                                    >
+                                        Click Simulated Link
+                                    </button>
+                                )}
+                                <button
+                                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => {
+                                        if (emailScenarioIndex < emailScenarios.length - 1) {
+                                            setEmailScenarioIndex(prevIndex => prevIndex + 1);
+                                        } else {
+                                            showAlert('Scenario Complete: You have completed all email scenarios!');
+                                            setCurrentScreen('home');
+                                        }
+                                    }}
+                                >
+                                    Next Email Scenario
+                                </button>
+                                <button
+                                    className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-xl w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('home')}
+                                >
+                                    Back to Home
+                                </button>
+                            </div>
+                        );
+
+                    case 'website':
+                        const currentWebsite = websiteScenarios[websiteScenarioIndex];
+                        if (!currentWebsite) {
+                            return (
+                                <div className="flex flex-col items-center justify-center p-5 min-h-[500px]">
+                                    <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-gray-700 text-center">All Website Scenarios Completed!</h2>
+                                    <button
+                                        className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                        onClick={() => setCurrentScreen('home')}
+                                    >
+                                        Back to Home
+                                    </button>
+                                </div>
+                            );
+                        }
+                        return (
+                            <div className="flex flex-col p-5 bg-white rounded-lg shadow-md m-4 h-[calc(100vh-2rem)] overflow-y-auto">
+                                <h2 className="text-xl md:text-2xl font-semibold mb-4 text-gray-700 text-center">Fake Website Scenario</h2>
+                                <div className="flex items-center bg-gray-100 p-3 rounded-lg mb-4 shadow-sm">
+                                    <span className="text-2xl mr-2">🔒</span>
+                                    <button
+                                        className="flex-1 text-blue-600 hover:underline text-lg text-left truncate"
+                                        onClick={() => handleWebsiteVisualCueClick(currentWebsite.visualCues.find(c => c.type === 'url'))}
+                                    >
+                                        {currentWebsite.url}
+                                    </button>
+                                    <button
+                                        className="text-2xl ml-2"
+                                        onClick={() => handleWebsiteVisualCueClick(currentWebsite.visualCues.find(c => c.type === 'ssl'))}
+                                    >
+                                        ⚠️
+                                    </button>
+                                </div>
+                                <div className="flex flex-col items-center py-5">
+                                    <button
+                                        className="flex flex-col items-center"
+                                        onClick={() => handleWebsiteVisualCueClick(currentWebsite.visualCues.find(c => c.type === 'design'))}
+                                    >
+                                        <h3 className="text-2xl font-bold mb-2 text-gray-800">{currentWebsite.title}</h3>
+                                        <p className="text-gray-700 text-center mb-5">{currentWebsite.content}</p>
+                                        <div className="w-40 h-28 bg-gray-200 flex items-center justify-center rounded-lg mb-5 border border-gray-300">
+                                            <p className="text-gray-500 text-sm text-center">[Pixelated/Suspicious Logo Here]</p>
+                                        </div>
+                                        <button className="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-5 rounded-lg shadow-md transition duration-300 ease-in-out">
+                                            Sign In
+                                        </button>
+                                    </button>
+                                </div>
+                                <button
+                                    className="bg-gray-500 hover:bg-gray-600 text-white font-bold py-3 px-6 rounded-xl mb-4 w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => {
+                                        if (websiteScenarioIndex < websiteScenarios.length - 1) {
+                                            setWebsiteScenarioIndex(prevIndex => prevIndex + 1);
+                                        } else {
+                                            showAlert('Scenario Complete: You have completed all website scenarios!');
+                                            setCurrentScreen('home');
+                                        }
+                                    }}
+                                >
+                                    Next Website Scenario
+                                </button>
+                                <button
+                                    className="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-xl w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('home')}
+                                >
+                                    Back to Home
+                                </button>
+                            </div>
+                        );
+
+                    case 'education':
+                        return (
+                            <div className="flex flex-col p-5 bg-gray-50 rounded-lg shadow-md m-4 h-[calc(100vh-2rem)] overflow-y-auto">
+                                <h2 className="text-xl md:text-2xl font-semibold mb-6 text-gray-700 text-center">Educational Modules</h2>
+                                <div className="bg-white p-5 rounded-lg shadow-sm mb-4">
+                                    <h3 className="text-lg md:text-xl font-bold mb-3 text-gray-800">Module 1: Identifying Phishing Emails</h3>
+                                    <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                        <li>Misspellings or grammatical errors.</li>
+                                        <li>Generic greetings (e.g., "Dear Customer").</li>
+                                        <li>Urgent or threatening language.</li>
+                                        <li>Suspicious sender email addresses (e.g., `support@amaz0n.com`).</li>
+                                        <li>Links that don't match the legitimate domain when you hover over them (or long-press on mobile).</li>
+                                        <li>Requests for personal information or credentials.</li>
+                                    </ul>
+                                </div>
+                                <div className="bg-white p-5 rounded-lg shadow-sm mb-4">
+                                    <h3 className="text-lg md:text-xl font-bold mb-3 text-gray-800">Module 2: Spotting Fake Websites</h3>
+                                    <ul className="list-disc list-inside text-gray-700 space-y-2">
+                                        <li>Incorrect URLs (e.g., `amaz0n.com` instead of `amazon.com`).</li>
+                                        <li>Lack of HTTPS (no padlock icon or "Not Secure" warning).</li>
+                                        <li>Poor design, pixelated logos, or inconsistent branding.</li>
+                                        <li>Pop-ups asking for unusual permissions.</li>
+                                        <li>Too good to be true offers.</li>
+                                    </ul>
+                                </div>
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl mt-4 w-4/5 md:w-3/5 mx-auto shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('home')}
+                                >
+                                    Back to Home
+                                </button>
+                            </div>
+                        );
+
+                    case 'score':
+                        return (
+                            <div className="flex flex-col items-center justify-center p-5 min-h-[500px]">
+                                <h2 className="text-2xl md:text-3xl font-semibold mb-6 text-gray-700 text-center">Your Current Phishing IQ Score</h2>
+                                <p className="text-4xl font-bold text-green-600 mb-6">{score} Points</p>
+                                <p className="text-lg text-gray-700 mb-8 text-center">Keep practicing to improve!</p>
+                                <button
+                                    className="bg-blue-500 hover:bg-blue-600 text-white font-bold py-3 px-6 rounded-xl w-4/5 md:w-3/5 shadow-lg transition duration-300 ease-in-out"
+                                    onClick={() => setCurrentScreen('home')}
+                                >
+                                    Back to Home
+                                </button>
+                            </div>
+                        );
+
+                    default:
+                        return null;
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6">
+                    {renderScreen()}
+                    <CustomAlert message={alertMessage} onClose={closeAlert} />
+                </div>
+            );
+        };
+
+        // Render the App component into the root div
+        const container = document.getElementById('root');
+        const root = createRoot(container);
+        root.render(<App />);
+    </script>
+</body>
+</html>

@@ -14,7 +14,22 @@
     <title>Cybersecurity Risk Calculator</title>
   </head>
   <body>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    <script>
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', function(user) {
+          if (!user) {
+            window.netlifyIdentity.on('login', function() {
+              window.location.href = '/';
+            });
+          }
+        });
+        window.netlifyIdentity.on('logout', function() {
+          window.location.href = '/login';
+        });
+      }
+    </script>
   </body>
 </html>

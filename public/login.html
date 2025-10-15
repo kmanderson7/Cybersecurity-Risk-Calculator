@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Sign In · Cybersecurity Risk Calculator</title>
+    <link rel="icon" href="/favicon.ico" />
+    <meta name="robots" content="noindex" />
+    <style>
+      :root { color-scheme: light dark; }
+      body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, Noto Sans, Ubuntu, Cantarell, Helvetica, "Apple Color Emoji", "Segoe UI Emoji"; margin:0; padding:0; }
+      .wrap { min-height: 100vh; display:flex; align-items:center; justify-content:center; background:#f7fafc; }
+      .card { background:#fff; color:#111827; border-radius: 12px; padding: 28px; width: 100%; max-width: 460px; box-shadow: 0 10px 20px rgba(0,0,0,.06); }
+      h1 { font-size: 1.25rem; margin: 0 0 8px; }
+      p  { margin: 0 0 16px; color:#4b5563; }
+      .actions { display:flex; gap:12px; margin-top: 12px; }
+      .btn { display:inline-flex; align-items:center; justify-content:center; gap:8px; padding: 10px 14px; border-radius:10px; text-decoration:none; font-weight:600; cursor:pointer; border:1px solid #e5e7eb; }
+      .btn-primary { background:#111827; color:#fff; border-color:#111827; }
+      .btn-outline { background:#fff; color:#111827; }
+      .meta { font-size:12px; color:#6b7280; margin-top: 10px; }
+    </style>
+  </head>
+  <body>
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+    <div class="wrap">
+      <div class="card">
+        <h1>Access Required</h1>
+        <p>Log in with your INP2 subscriber account to use the Cybersecurity Risk Calculator.</p>
+        <div class="actions">
+          <a class="btn btn-primary" id="loginBtn" href="#">Log In</a>
+          <a class="btn btn-outline" id="subscribeBtn" href="https://www.inp2.com/theexecutivecybertoolkit" target="_blank" rel="noopener noreferrer">Subscribe</a>
+        </div>
+        <div class="meta">Already subscribed? Use the same email to log in.</div>
+      </div>
+    </div>
+    <script>
+      // If already logged in with subscriber role, go to app
+      function hasSubscriberRole(user){
+        try { return (user && user.app_metadata && Array.isArray(user.app_metadata.roles) && user.app_metadata.roles.includes('subscriber')); } catch(e) { return false; }
+      }
+
+      if (window.netlifyIdentity) {
+        window.netlifyIdentity.on('init', function(user){
+          if (hasSubscriberRole(user)) {
+            window.location.replace('/');
+          }
+        });
+        window.netlifyIdentity.init();
+      }
+
+      document.getElementById('loginBtn').addEventListener('click', function(e){
+        e.preventDefault();
+        if (!window.netlifyIdentity) return;
+        window.netlifyIdentity.open('login');
+        window.netlifyIdentity.on('login', function(user){
+          if (hasSubscriberRole(user)) {
+            window.location.href = '/';
+          } else {
+            // Not yet provisioned with role — show a friendly note
+            alert('Your account is pending subscriber access. If you recently subscribed, please check your invite email or contact support.');
+          }
+        });
+      });
+    </script>
+  </body>
+  </html>
+
