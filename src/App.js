@@ -1016,9 +1016,9 @@ const FairRiskCalculator = () => {
             inspired by industry-standard FAIR practices. Actual incident costs vary significantly based on specific circumstances, industry, 
             geography, and regulatory requirements. Results should complement, not replace, comprehensive risk assessments and professional advice.
           </p>
-           <p class="text-xs text-gray-600 mt-2"> 
+           <p className="text-xs text-gray-600 mt-2">
       © 2025 INP² All rights reserved.
-      <br> This Cybersecurity Risk Calculator and its underlying methodologies are proprietary to INP². No part of this tool may be reproduced, distributed, or used for commercial purposes without explicit written permission.
+      <br /> This Cybersecurity Risk Calculator and its underlying methodologies are proprietary to INP². No part of this tool may be reproduced, distributed, or used for commercial purposes without explicit written permission.
     </p>
         </div>
       </div>
